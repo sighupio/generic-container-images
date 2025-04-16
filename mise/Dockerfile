@@ -5,5 +5,5 @@ RUN apt-get update  \
        sudo curl git ca-certificates build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install latest mise, you can set the specific version using the env var MISE_VERSION
+ARG MISE_VERSION
 RUN curl https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh

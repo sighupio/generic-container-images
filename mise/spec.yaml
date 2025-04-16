@@ -1,1 +1,3 @@
 image: sighup/mise
+tags:
+  MISE_VERSION: v2025.4.4
