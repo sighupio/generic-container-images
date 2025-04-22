@@ -7,12 +7,14 @@ ARG KUSTOMIZE
 ARG BATS
 ARG DEBIAN_FRONTEND noninteractive
 ARG AWSCLI
+ARG TOFU
+
 
 ENV PATH /root/go/bin:/usr/lib/go-1.18/bin:$PATH
 
 RUN apt-get update
 
-RUN apt-get install -yq make git curl ca-certificates npm jq skopeo unzip
+RUN apt-get install -yq make git curl ca-certificates npm jq skopeo unzip ansible
 
 RUN npm install -g bats@${BATS}
 
@@ -37,6 +39,11 @@ RUN curl -fLOs https://github.com/kubernetes-sigs/kustomize/releases/download/ku
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWSCLI}.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && ./aws/install && rm -rf ./aws ./awscliv2.zip
 
+RUN curl -fLOs https://github.com/opentofu/opentofu/releases/download/v${TOFU}/tofu_${TOFU}_linux_amd64.tar.gz && \
+    tar -zxvf tofu_${TOFU}_linux_amd64.tar.gz && \
+    chmod +x tofu && \
+    mv tofu /usr/local/bin/tofu
+
 RUN make --version && \
     kubectl version --client && \
     helm version && \
@@ -44,4 +51,6 @@ RUN make --version && \
     yq --version && \
     kustomize version && \
     bats --version && \
-    aws --version
+    aws --version && \
+    ansible --version
+
