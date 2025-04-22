@@ -52,5 +52,6 @@ RUN make --version && \
     kustomize version && \
     bats --version && \
     aws --version && \
-    ansible --version
+    ansible --version && \
+    tofu version
 
