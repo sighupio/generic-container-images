@@ -14,7 +14,9 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 
 RUN apt-get update
 
-RUN apt-get install -yq make git curl ca-certificates npm jq skopeo unzip ansible
+RUN apt-get install -yq make git curl ca-certificates npm jq skopeo unzip ansible python3 python3-pip
+
+RUN pip3 install six
 
 RUN npm install -g bats@${BATS}
 
