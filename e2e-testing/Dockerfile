@@ -9,7 +9,6 @@ ARG DEBIAN_FRONTEND noninteractive
 ARG AWSCLI
 ARG TOFU
 
-
 ENV PATH /root/go/bin:/usr/lib/go-1.18/bin:$PATH
 
 RUN apt-get update
