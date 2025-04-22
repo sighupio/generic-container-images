@@ -5,13 +5,14 @@ ARG HELM
 ARG YQ
 ARG KUSTOMIZE
 ARG BATS
+ARG TOFU
 ARG DEBIAN_FRONTEND=noninteractive
 
 ENV PATH /root/go/bin:/usr/lib/go-1.18/bin:$PATH
 
 RUN apt-get update
 
-RUN apt-get install -yq make git curl ca-certificates npm jq skopeo
+RUN apt-get install -yq make git curl ca-certificates npm jq skopeo ansible
 
 RUN npm install -g bats@${BATS}
 
@@ -28,9 +29,15 @@ RUN curl -fLOs https://github.com/kubernetes-sigs/kustomize/releases/download/ku
     chmod +x kustomize && \
     mv kustomize /usr/local/bin/kustomize
 
+RUN curl -fLOs https://github.com/opentofu/opentofu/releases/download/v${TOFU}/tofu_${TOFU}_linux_amd64.tar.gz && \
+    tar -zxvf tofu_${TOFU}_linux_amd64.tar.gz && \
+    chmod +x tofu && \
+    mv tofu /usr/local/bin/tofu
+
 RUN make --version && \
     kubectl version --client && \
     jq --version && \
     yq --version && \
     kustomize version && \
-    bats --version
+    bats --version && \
+    ansible --version
