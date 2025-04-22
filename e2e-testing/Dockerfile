@@ -5,11 +5,12 @@ ARG HELM
 ARG YQ
 ARG KUSTOMIZE
 ARG BATS
-ARG DEBIAN_FRONTEND noninteractive
 ARG AWSCLI
 ARG TOFU
 
 ENV PATH /root/go/bin:/usr/lib/go-1.18/bin:$PATH
+
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get update
 
