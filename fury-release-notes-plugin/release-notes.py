@@ -18,8 +18,9 @@ if __name__ == "__main__":
     # This allows us to use the "final" release notes also for Release Candidates
     release_notes_file = f"./docs/releases/v{major}.{minor}.{patch}.md"
 
-    # We use <version>-rev.1 for revisions:
-    if sversion.prerelease[0] == "rev":
+    # We use <version>-rev.X for revisions, for example in the on-premises installer
+    # The library considers '-rev.X' a prerelease.
+    if sversion.prerelease and sversion.prerelease[0] == "rev":
         release_notes_file = f"./docs/releases/v{version}.md"
 
     print(f"Copying from {release_notes_file} to {RELEASE_NOTES_FILE_PATH}")
