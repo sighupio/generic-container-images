@@ -2,7 +2,7 @@ FROM debian:12-slim
 
 RUN apt-get update  \
     && apt-get -y --no-install-recommends install  \
-       sudo curl git ca-certificates build-essential docker.io \
+       sudo curl git ca-certificates build-essential docker.io openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
 ARG MISE_VERSION
