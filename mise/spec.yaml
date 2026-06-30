@@ -2,4 +2,4 @@ image: sighup/mise
 tags:
   MISE_VERSION: 
     - "v2025.4.4"
-    - "v2026.6.15"
+    - "v2026.6.14"
