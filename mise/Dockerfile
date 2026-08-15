@@ -6,4 +6,6 @@ RUN apt-get update  \
     && rm -rf /var/lib/apt/lists/*
 
 ARG MISE_VERSION
-RUN curl https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh
+# Pass MISE_VERSION to the installer so the image tag pins the mise version. Without it the script
+# installs the latest release, which makes the tag reflect only the build date.
+RUN curl https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise MISE_VERSION="${MISE_VERSION}" sh
