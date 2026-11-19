@@ -3,10 +3,12 @@
 #   mode: push (default)  the git tree of the tag, as one tar+gzip layer. Needs repository and artifact_type.
 #   mode: sync            the sysext and Flatcar files that immutable.yaml pins. Optional: file.
 #   username, password    the robot account. registry defaults to registry.sighup.io.
+#   dry_run: true         no login and no push: compare with the registry, download and check the new files.
 # The registry tags are immutable: a tag that already has the same files is skipped, other files fail.
 set -eu
 
 REGISTRY=${PLUGIN_REGISTRY:-registry.sighup.io}
+DRY_RUN=${PLUGIN_DRY_RUN:-false}
 TAB=$(printf '\t')
 PH="" CPH=""
 if [ "${PLUGIN_PLAIN_HTTP:-false}" = true ]; then PH=--plain-http CPH=--to-plain-http; fi # Test registries only.
@@ -54,6 +56,7 @@ push_source() {
   git archive --format=tar.gz -o "$WORK/source.tar.gz" HEAD
   echo "- source.tar.gz sha256:$(sha256sum "$WORK/source.tar.gz" | cut -d' ' -f1)" >"$WORK/want"
   already_pushed "$ref" "$WORK/want" && return
+  if [ "$DRY_RUN" = true ]; then echo "Would push $ref" && return; fi
 
   created=$(git log -1 --format=%cI HEAD)
   cd "$WORK"
@@ -89,6 +92,7 @@ push_files() {
       curl -fsSL -o "$dir/$title" "$url"
       echo "$sum  $dir/$title" | sha256sum -c -
     done <"$WORK/arch"
+    if [ "$DRY_RUN" = true ]; then rm -rf "$dir" && continue; fi
     (
       cd "$dir"
       set --
@@ -98,6 +102,7 @@ push_files() {
         --annotation "org.opencontainers.image.version=$tag" "$@" >/dev/null
     )
   done
+  if [ "$DRY_RUN" = true ]; then echo "Would push $ref" && return; fi
   # shellcheck disable=SC2046 # One argument for each arch.
   oras manifest index create --oci-layout "$layout:$tag" --artifact-type "application/vnd.sighup.$type.v1" \
     $(cut -f3 "$lines" | sort -u | sed "s/^/$tag-/") >/dev/null
@@ -110,11 +115,13 @@ sync_files() {
   # One line for each file: repo, tag, arch, title, sha256, url. x86-64 becomes amd64.
   yq -r '(
     (.kubernetes[].sysext[] | .name as $n | .version as $v | .arch | to_entries[] |
-      ["sd/sysext/" + $n, $v, .key, (.value.url | split("/") | .[-1]), .value.sha256, .value.url]),
-    (.kubernetes[].flatcar | .version as $v | .arch | to_entries[] | .key as $a | .value | to_entries[] |
+      ["sd/sysext/" + $n, $v, (.key | sub("^x86-64$", "amd64")), (.value.url | split("/") | .[-1]), .value.sha256, .value.url]),
+    (.kubernetes[].flatcar | select(. != null) | .version as $v | .arch | to_entries[] |
+      (.key | sub("^x86-64$", "amd64")) as $a | .value | to_entries[] |
       ["sd/flatcar/" + (.key | sub("^(kernel|initrd|image)$", "boot")), $v, $a, .value.filename, .value.sha256, .value.url]))
-    | .[2] |= sub("^x86-64$", "amd64") | @tsv' "$file" |
-    sort -t "$TAB" -u -k1,5 >"$WORK/all"
+    | @tsv' "$file" >"$WORK/raw" # No pipe: sh has no pipefail, a yq error must stop here.
+  sed '/^$/d' "$WORK/raw" | sort -t "$TAB" -u -k1,5 >"$WORK/all"
+  if [ ! -s "$WORK/all" ]; then echo "ERROR: $file pins no files." && exit 1; fi
 
   conflicts=$(cut -f1-4 "$WORK/all" | uniq -d)
   if [ -n "$conflicts" ]; then
@@ -128,7 +135,7 @@ sync_files() {
   done
 }
 
-if [ -n "${PLUGIN_USERNAME:-}" ]; then
+if [ "$DRY_RUN" != true ] && [ -n "${PLUGIN_USERNAME:-}" ]; then
   printf '%s' "${PLUGIN_PASSWORD:?}" | oras login $PH -u "$PLUGIN_USERNAME" --password-stdin "$REGISTRY"
 fi
 
