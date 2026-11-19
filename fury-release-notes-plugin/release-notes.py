@@ -1,4 +1,5 @@
 import os
+import re
 from shutil import copyfile
 
 import semantic_version  # pylint: disable=import-error
@@ -19,9 +20,10 @@ if __name__ == "__main__":
     release_notes_file = f"./docs/releases/v{major}.{minor}.{patch}.md"
 
     # We use <version>-rev.X for revisions, for example in the on-premises installer
-    # The library considers '-rev.X' a prerelease.
+    # The library considers '-rev.X' a prerelease. An rc of a revision (v1.36.5-rev.1-rc.0) uses the notes of v1.36.5-rev.1.
     if sversion.prerelease and sversion.prerelease[0] == "rev":
-        release_notes_file = f"./docs/releases/v{version}.md"
+        revision = re.sub(r"-rc\.\d+$", "", version)
+        release_notes_file = f"./docs/releases/v{revision}.md"
 
     print(f"Copying from {release_notes_file} to {RELEASE_NOTES_FILE_PATH}")
     copyfile(release_notes_file, RELEASE_NOTES_FILE_PATH)
