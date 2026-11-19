@@ -1,0 +1,6 @@
+image: sighup/sd-oci-push-plugin
+tags:
+  ORAS_VERSION:
+    - "1.4.0"
+  YQ_VERSION:
+    - "4.53.6"
